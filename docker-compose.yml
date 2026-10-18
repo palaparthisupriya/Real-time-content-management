@@ -1,6 +1,7 @@
 version: '3.8'
 
 services:
+<<<<<<< HEAD
   # 1. PostgreSQL Database
   postgres:
     image: postgres:14-alpine
@@ -29,11 +30,20 @@ services:
     restart: unless-stopped
     ports:
       - "${REDIS_PORT:-6379}:6379"
+=======
+  redis:
+    image: redis:alpine
+    container_name: redis-cache
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+>>>>>>> 0e63bc7454d8c91b885f3a0d0d162fb1b9eff7ce
     volumes:
       - redis_data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
+<<<<<<< HEAD
       timeout: 5s
       retries: 5
       start_period: 5s
@@ -130,3 +140,40 @@ volumes:
   postgres_data:
   redis_data:
   kafka_data:
+=======
+      timeout: 3s
+      retries: 5
+    networks:
+      - cache-net
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: caching-service-app
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8080
+      - REDIS_URL=redis://redis:6379/0
+      - L1_CAPACITY=100
+      - L2_TTL_SECONDS=30
+      - LOCK_TIMEOUT_MS=5000
+      - LOCK_RETRY_INTERVAL_MS=100
+      - LOCK_MAX_RETRIES=50
+      - ORACLE_DELAY_SECONDS=2.0
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - cache-net
+
+networks:
+  cache-net:
+    driver: bridge
+
+volumes:
+  redis_data:
+>>>>>>> 0e63bc7454d8c91b885f3a0d0d162fb1b9eff7ce
